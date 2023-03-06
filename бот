@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 # инициализация бота
-bot = telebot.TeleBot('5830349818:AAEMtpfsbjVwGRyH5RADuTMkO2nOIqOOdwc')
+bot = telebot.TeleBot('')
 
 # список чатов, куда будут отправляться сообщения
 chats = []
