@@ -1,0 +1,80 @@
+import asyncio
+import telebot
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+
+# инициализация бота
+bot = telebot.TeleBot('5830349818:AAEMtpfsbjVwGRyH5RADuTMkO2nOIqOOdwc')
+
+# список чатов, куда будут отправляться сообщения
+chats = []
+
+# функция для получения статистики блокчейна и курса ТОН
+def get_params():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    service = Service(executable_path='/path/to/chromedriver')
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    url = "https://ton.org/"
+    driver.get(url)
+
+    # получение статистики блокчейна
+    tx_count = driver.find_element(By.CSS_SELECTOR, ".BlockchainStatistics__card--transactions .BlockchainStatistics__card-inner h4").text
+    active_wallets = driver.find_element(By.CSS_SELECTOR, ".BlockchainStatistics__card--wallets .BlockchainStatistics__card-inner h4").text
+    validators = driver.find_element(By.CSS_SELECTOR, ".BlockchainStatistics__card--validators .BlockchainStatistics__card-inner h4").text
+
+    # получение курса ТОН
+    url = 'https://ton.org/en/toncoin'
+    driver.get(url)
+    ton_course = driver.find_element(By.CSS_SELECTOR, ".TonCourse__title h1").text
+
+    driver.quit()
+
+    return [tx_count, active_wallets, validators, ton_course]
+
+
+# функция для отправки сообщения с параметрами
+def send_params(chat__id):
+    params = get_params()
+    message = f"Количество транзакций: {params[0]}\nКоличество активных кошельков: {params[1]}\nКоличество валидаторов: {params[2]}\nКурс ТОН: {params[3]}"
+    bot.send_message(chat_id=chat__id, text=message)
+
+
+# функция, которая запускает отправку сообщения раз в час
+async def send_message_periodically():
+    while True:
+        for chat__id in chats:
+            send_params(chat__id)
+
+        await asyncio.sleep(3600)
+
+
+# обработчик команды /start
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    if message.chat.id not in chats:
+        chats.append(message.chat.id)
+    bot.send_message(chat_id=message.chat.id, text='Привет! Я бот, который отправляет информацию о ТОН каждый час. Чтобы начать, просто поздоровайся со мной!')
+
+
+# обработчик любого текстового сообщения
+@bot.message_handler(content_types=['text'])
+def send_params_message(message):
+    if message.chat.id not in chats:
+        chats.append(message.chat.id)
+    send_params(message.chat.id)
+
+
+# запуск бота и функции отправки сообщения раз в час
+async def main():
+    await asyncio.gather(
+        bot.polling(none_stop=True),
+        send_message_periodically()
+    )
+
+if __name__ == '__main__':
+    asyncio.run(main())
