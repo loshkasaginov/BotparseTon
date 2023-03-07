@@ -7,7 +7,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 # инициализация бота
-bot = telebot.TeleBot('')
+bot = telebot.TeleBot('5830349818:AAEMtpfsbjVwGRyH5RADuTMkO2nOIqOOdwc')
 
 # список чатов, куда будут отправляться сообщения
 chats = []
@@ -47,6 +47,7 @@ def send_params(chat__id):
 # функция, которая запускает отправку сообщения раз в час
 async def send_message_periodically():
     while True:
+        print("1 hour")
         for chat__id in chats:
             send_params(chat__id)
 
@@ -66,15 +67,16 @@ def start_message(message):
 def send_params_message(message):
     if message.chat.id not in chats:
         chats.append(message.chat.id)
+    print(chats)
     send_params(message.chat.id)
 
 
 # запуск бота и функции отправки сообщения раз в час
 async def main():
-    await asyncio.gather(
-        bot.polling(none_stop=True),
-        send_message_periodically()
-    )
+    asyncio.create_task(send_message_periodically())
+    bot.polling(none_stop=True),
+
+
 
 if __name__ == '__main__':
     asyncio.run(main())
